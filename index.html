@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>100 Years of Pauli Exclusion</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="canvas"></canvas>
+
+      <!-- Container edge indicators (desktop only) -->
+      <div id="containerEdgeLeft" class="container-edge"></div>
+      <div id="containerEdgeRight" class="container-edge"></div>
+
+      <div id="controls">
+        <div class="exhibit-header">
+          <h1>Pauli Exclusion Principle</h1>
+          <p class="subtitle">1925 – 2025</p>
+        </div>
+
+        <!-- PRESET SCENARIOS -->
+        <div class="preset-section">
+          <h3 class="section-label">Explore Scenarios</h3>
+          <div class="preset-buttons">
+            <button class="preset-btn" data-preset="sand">
+              <span class="preset-name">Inert Matter</span>
+              <span class="preset-desc">Static pile</span>
+            </button>
+            <button class="preset-btn active" data-preset="ghost">
+              <span class="preset-name">Active Ghost</span>
+              <span class="preset-desc">Emergent life</span>
+            </button>
+            <button class="preset-btn" data-preset="collapse">
+              <span class="preset-name">Quantum Collapse</span>
+              <span class="preset-desc">No exclusion</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- TOPOLOGY SELECTOR -->
+        <div class="topology-section">
+          <h3 class="section-label">Topology</h3>
+          <div class="topology-radios">
+            <label class="topology-radio">
+              <input type="radio" name="topology" value="flat" checked />
+              <span class="radio-label">Flat Earth</span>
+            </label>
+            <label class="topology-radio">
+              <input type="radio" name="topology" value="planet" />
+              <span class="radio-label">Planetoid</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- MACRO CONTROLS -->
+        <div class="macro-section">
+          <h3 class="section-label">Adjust Parameters</h3>
+
+          <div class="control-group">
+            <label for="gravity">
+              <span class="label-text">Gravity</span>
+              <span class="value-display"><span id="gravity-value">50</span>%</span>
+            </label>
+            <input type="range" id="gravity" min="0" max="100" step="1" value="50" />
+            <div class="slider-labels">
+              <span>None</span>
+              <span>Earth-like</span>
+              <span>Extreme</span>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label for="pauliStrength">
+              <span class="label-text">Pauli Exclusion</span>
+              <span class="value-display"><span id="pauliStrength-value">50</span>%</span>
+            </label>
+            <input type="range" id="pauliStrength" min="0" max="100" step="1" value="50" />
+            <div class="slider-labels">
+              <span>Collapse</span>
+              <span>Normal</span>
+              <span>Solid</span>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label for="lifeForce">
+              <span class="label-text">Life Force</span>
+              <span class="value-display"><span id="lifeForce-value">80</span>%</span>
+            </label>
+            <input type="range" id="lifeForce" min="0" max="100" step="1" value="80" />
+            <div class="slider-labels">
+              <span>Inert</span>
+              <span>Active</span>
+              <span>Frenetic</span>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label for="particleCount">
+              <span class="label-text">Particle Count</span>
+              <span class="value-display"><span id="particleCount-value">1025</span></span>
+            </label>
+            <input type="range" id="particleCount" min="50" max="2025" step="25" value="1025" />
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button id="reset">Reset Simulation</button>
+          <button id="infoBtn">Info</button>
+          <button id="collapseBtn" class="collapse-btn" aria-label="Hide controls">›</button>
+        </div>
+      </div>
+
+      <!-- Collapsed Tab (hidden when panel is visible) -->
+      <div id="collapsedTab" class="collapsed-tab" style="display: none;">
+        <div class="grip-lines">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <span class="tab-label">CONTROLS</span>
+      </div>
+    </div>
+
+    <!-- Info Modal -->
+    <div id="infoModal" class="info-modal hidden">
+      <div class="info-overlay"></div>
+      <div class="info-content">
+        <button id="infoCloseBtn" class="info-close-btn">×</button>
+
+        <h2>100 Years of Pauli Exclusion</h2>
+        <p class="subtitle-text">An Active Matter Simulation</p>
+
+        <section>
+          <h3>What Am I Seeing?</h3>
+          <p>
+            You are not watching inert grains of sand. This is a simulation of <strong>Active Matter</strong>.
+          </p>
+          <p>
+            Unlike passive matter (like water or rocks), these particles possess internal energy and specific "urges."
+            They actively herd together and climb on top of their neighbors, fighting gravity to form dynamic, emergent structures.
+          </p>
+        </section>
+
+        <section>
+          <h3>The Science (1925–2025)</h3>
+          <h4>The Pauli Exclusion Principle</h4>
+          <p>
+            Exactly 100 years ago, Wolfgang Pauli formulated the rule that prevents electrons from occupying
+            the same quantum state simultaneously.
+          </p>
+          <ul>
+            <li>
+              <strong>In this simulation:</strong> The "Pauli Exclusion" slider represents this force.
+              It gives the particles volume and prevents them from occupying the same space.
+            </li>
+            <li>
+              <strong>The Experiment:</strong> Try dragging <strong>Pauli Exclusion</strong> to 0%.
+              Without exclusion, matter loses its volume and collapses into a dense singularity.
+            </li>
+          </ul>
+
+          <h4>Emergent Behavior</h4>
+          <p>The "Ghost" you see isn't hard-coded. It emerges from three simple local rules:</p>
+          <ol>
+            <li><strong>Herding:</strong> "Move laterally toward the group center."</li>
+            <li><strong>Climbing:</strong> "If a neighbor is higher, climb on their shoulders."</li>
+            <li><strong>Pressure:</strong> "If crushed by weight, stop climbing to stabilize the foundation."</li>
+          </ol>
+        </section>
+
+        <section>
+          <h3>Controls: The God Hand</h3>
+          <p>The simulation reacts to your presence.</p>
+          <ul>
+            <li>
+              <strong>Hover (Desktop):</strong> The particles fear the cursor. Hovering creates a gentle repulsive field.
+            </li>
+            <li>
+              <strong>Click & Drag (Desktop) / Touch (Mobile):</strong> Creates a massive gravitational singularity.
+              Use this to "grab" chunks of the ghost, throw them, or drag them up walls.
+            </li>
+          </ul>
+        </section>
+
+        <section>
+          <h3>Topology Modes</h3>
+          <ul>
+            <li>
+              <strong>Flat Earth:</strong> Standard gravity. Particles accumulate on a flat floor.
+            </li>
+            <li>
+              <strong>Planetoid:</strong> Radial gravity. Particles orbit and settle on a central core.
+              Note how they slide around the ring to find each other instead of tunneling through the ground.
+            </li>
+          </ul>
+        </section>
+
+        <section class="credits">
+          <p>Built with TypeScript and Verlet Integration.</p>
+          <p>
+            <a href="https://github.com/yourusername/pauli" target="_blank" rel="noopener noreferrer">
+              View Source on GitHub
+            </a>
+          </p>
+        </section>
+
+        <button id="infoCloseBtnMobile" class="info-close-btn-mobile">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
