@@ -31,8 +31,8 @@ const PRESETS: Record<string, Omit<MacroParams, 'particleCount' | 'topology'>> =
     lifeForce: 0,       // No cohesion/climb/perception
   },
   ghost: {
-    gravity: 50,       // 50% → quadratic maps to 1.0 (earth-like)
-    pauliStrength: 50,  // Maps to stiffness: 0.2
+    gravity: 46,       // 46% → slightly lighter than earth-like
+    pauliStrength: 84,  // High stiffness for solid structure
     lifeForce: 50,      // High activity
   },
   collapse: {
@@ -164,10 +164,11 @@ let manualContainerWidth = 0;
 // === STORAGE FUNCTIONS ===
 
 function getDefaultMacroParams(): MacroParams {
+  const isMobile = window.innerWidth <= 600;
   return {
     ...PRESETS.ghost,
-    particleCount: 1025, // Default particle count
-    topology: 'flat',     // Default topology
+    particleCount: isMobile ? 150 : 500, // Mobile: 150, Desktop: 500
+    topology: 'flat',
   };
 }
 
@@ -396,8 +397,11 @@ function matchCurrentParamsToPreset(): void {
 
 let currentMacroParams = loadMacroParams();
 
-// Randomize topology on each page load (50/50 chance)
-currentMacroParams.topology = Math.random() < 0.5 ? 'flat' : 'planet';
+// Desktop: randomize topology (50/50 chance). Mobile: always flat-earth
+const isMobileDevice = window.innerWidth <= 600;
+if (!isMobileDevice) {
+  currentMacroParams.topology = Math.random() < 0.5 ? 'flat' : 'planet';
+}
 
 updateUIFromMacro(currentMacroParams);
 
