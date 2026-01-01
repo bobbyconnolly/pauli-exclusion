@@ -746,3 +746,110 @@ input[type="range"]::-moz-range-thumb:active {
     justify-content: center;
   }
 }
+
+/* === COMPACT MODE FOR SHORT VIEWPORTS === */
+@media (max-height: 700px) {
+  #controls {
+    padding: 12px;
+  }
+
+  .exhibit-header {
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+  }
+
+  .exhibit-header h1 {
+    font-size: 1.1rem;
+  }
+
+  .exhibit-header .subtitle {
+    font-size: 0.75rem;
+  }
+
+  .preset-section {
+    margin-bottom: 10px;
+  }
+
+  .section-label {
+    font-size: 0.7rem;
+    margin-bottom: 6px;
+  }
+
+  .preset-btn {
+    min-height: 48px;
+    padding: 8px 6px;
+  }
+
+  .preset-name {
+    font-size: 0.75rem;
+  }
+
+  .preset-desc {
+    font-size: 0.6rem;
+  }
+
+  .topology-section {
+    margin-bottom: 10px;
+  }
+
+  .topology-radio {
+    padding: 8px 10px;
+  }
+
+  .radio-label {
+    font-size: 0.8rem;
+  }
+
+  .macro-section {
+    margin-bottom: 10px;
+  }
+
+  .control-group {
+    margin-bottom: 10px;
+  }
+
+  .control-group label {
+    font-size: 0.8rem;
+    margin-bottom: 5px;
+  }
+
+  .control-group label .value-display {
+    font-size: 0.8rem;
+  }
+
+  input[type="range"] {
+    height: 5px;
+    margin-bottom: 4px;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    width: 16px;
+    height: 16px;
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+  }
+
+  .slider-labels {
+    font-size: 0.6rem;
+  }
+
+  .button-row {
+    margin-top: 6px;
+  }
+
+  #reset,
+  #infoBtn {
+    padding: 10px 12px;
+    font-size: 0.85rem;
+  }
+
+  .collapse-btn {
+    padding: 10px 8px;
+    padding-left: 7px;
+    padding-bottom: 12px;
+    font-size: 28px;
+  }
+}
