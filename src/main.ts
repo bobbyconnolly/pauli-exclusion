@@ -405,6 +405,16 @@ updateUIFromMacro(currentMacroParams);
 const isCollapsed = loadCollapsedState();
 setCollapsedState(isCollapsed);
 
+// Mobile: pulse the collapsed tab to draw attention on first load
+const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+if (isTouchDevice && isCollapsed) {
+  collapsedTab.classList.add('entrance-pulse');
+  // Remove class after animation completes (0.8s × 3 = 2.4s)
+  setTimeout(() => {
+    collapsedTab.classList.remove('entrance-pulse');
+  }, 2500);
+}
+
 // Set up mobile-specific particle count limits
 updateParticleCountMax();
 
@@ -618,4 +628,12 @@ collapseBtn.addEventListener('click', () => {
 // Collapsed tab - show the panel
 collapsedTab.addEventListener('click', () => {
   setCollapsedState(false);
+});
+
+// Mobile/touch: tap outside control panel to close it
+canvas.addEventListener('touchend', () => {
+  const isOpen = !controlsPanel.classList.contains('collapsed');
+  if (isOpen) {
+    setCollapsedState(true);
+  }
 });

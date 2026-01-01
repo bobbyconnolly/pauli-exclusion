@@ -494,6 +494,31 @@ input[type="range"]::-moz-range-thumb:active {
   color: #32dcdc;
 }
 
+/* Entrance pulse animation for mobile */
+@keyframes tab-pulse {
+  0%, 100% {
+    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  50% {
+    box-shadow: -4px 0 24px rgba(50, 220, 220, 0.5), 0 0 12px rgba(50, 220, 220, 0.3);
+    border-color: rgba(50, 220, 220, 0.4);
+  }
+}
+
+.collapsed-tab.entrance-pulse {
+  animation: tab-pulse 0.8s ease-in-out 3;
+}
+
+.collapsed-tab.entrance-pulse .tab-label {
+  color: #32dcdc;
+  animation: tab-pulse 0.8s ease-in-out 3;
+}
+
+.collapsed-tab.entrance-pulse .grip-lines span {
+  background: rgba(50, 220, 220, 0.4);
+}
+
 /* === RESPONSIVE === */
 @media (max-width: 600px) {
   /* Hide container edge indicators on mobile */
