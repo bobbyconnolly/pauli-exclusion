@@ -243,6 +243,12 @@ function updatePresetButtonStates(activePreset: string | null): void {
 // === PANEL COLLAPSE LOGIC ===
 
 function loadCollapsedState(): boolean {
+  // Mobile always starts collapsed so users see the simulation immediately
+  const isMobile = window.innerWidth <= 600;
+  if (isMobile) {
+    return true;
+  }
+  // Desktop: use saved preference, default to open
   const saved = localStorage.getItem(COLLAPSED_KEY);
   return saved === 'true';
 }
@@ -389,6 +395,10 @@ function matchCurrentParamsToPreset(): void {
 // === INITIALIZATION ===
 
 let currentMacroParams = loadMacroParams();
+
+// Randomize topology on each page load (50/50 chance)
+currentMacroParams.topology = Math.random() < 0.5 ? 'flat' : 'planet';
+
 updateUIFromMacro(currentMacroParams);
 
 // Restore collapsed state

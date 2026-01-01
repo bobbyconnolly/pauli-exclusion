@@ -165,6 +165,16 @@ export class Simulation {
   // Planet ornaments (decorative glowing spots)
   private planetOrnaments: Array<{ angle: number; color: string; glowIntensity: number; phase: number }> = [];
 
+  // Lava veins (fractal lightning-like paths)
+  private lavaVeins: Array<{ x: number; y: number }[]> = [];
+  private lavaParticles: Array<{
+    veinIndex: number;
+    progress: number; // 0-1 along the vein
+    speed: number;
+    trailColors: string[];
+  }> = [];
+  private lavaVeinsHidden: boolean = false;
+
   // Physics constants
   private readonly DAMPING = 0.98;
   private readonly COLLISION_ITERATIONS = 4;
@@ -188,6 +198,7 @@ export class Simulation {
     const isMobile = window.innerWidth <= 600;
     this.planetRadius = isMobile ? 60 : 100;
     this.initPlanetOrnaments();
+    this.initLavaVeins();
 
     window.addEventListener('resize', () => this.resize());
     this.setupInputListeners();
@@ -229,6 +240,113 @@ export class Simulation {
         phase: Math.random() * Math.PI * 2, // For pulsing animation
       });
     }
+  }
+
+  private initLavaVeins(): void {
+    // Generate fractal lava veins using midpoint displacement algorithm
+    // Veins are stored RELATIVE to planet center (0,0) and translated when drawing
+    const radius = this.planetRadius;
+
+    this.lavaVeins = [];
+    this.lavaParticles = [];
+
+    // Create 5-6 main veins radiating from center
+    const mainVeinCount = 5 + Math.floor(Math.random() * 2);
+
+    for (let i = 0; i < mainVeinCount; i++) {
+      // Random angle for this vein
+      const angle = (i / mainVeinCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
+
+      // Start slightly off-center, end at edge (relative to 0,0)
+      const startDist = radius * 0.15;
+      const endDist = radius * 0.95;
+
+      const startX = Math.cos(angle) * startDist;
+      const startY = Math.sin(angle) * startDist;
+      const endX = Math.cos(angle) * endDist;
+      const endY = Math.sin(angle) * endDist;
+
+      // Generate fractal path using midpoint displacement
+      const mainPath = this.generateFractalPath(startX, startY, endX, endY, 5, radius * 0.15);
+      this.lavaVeins.push(mainPath);
+
+      // Add 1-2 branches from random points along the main vein
+      const branchCount = 1 + Math.floor(Math.random() * 2);
+      for (let b = 0; b < branchCount; b++) {
+        // Pick a point 30-70% along the main path
+        const branchPointIndex = Math.floor(mainPath.length * (0.3 + Math.random() * 0.4));
+        const branchPoint = mainPath[branchPointIndex];
+
+        // Branch angle: deviate 30-60 degrees from main direction
+        const branchAngle = angle + (Math.random() > 0.5 ? 1 : -1) * (0.5 + Math.random() * 0.5);
+        const branchLength = radius * (0.2 + Math.random() * 0.3);
+        const branchEndX = branchPoint.x + Math.cos(branchAngle) * branchLength;
+        const branchEndY = branchPoint.y + Math.sin(branchAngle) * branchLength;
+
+        // Shorter recursion depth for branches
+        const branchPath = this.generateFractalPath(
+          branchPoint.x, branchPoint.y,
+          branchEndX, branchEndY,
+          3, radius * 0.08
+        );
+        this.lavaVeins.push(branchPath);
+      }
+    }
+
+    // Create particles for each vein
+    const trailColorSets = [
+      ['#ffffff', '#ffffaa', '#ffcc44', '#ff6600', '#cc3300'], // White to red
+      ['#ffffff', '#ffeecc', '#ffaa44', '#ff5500', '#aa2200'], // Warm white to dark red
+      ['#ffffcc', '#ffdd66', '#ff9933', '#ff4400', '#991100'], // Yellow to crimson
+    ];
+
+    for (let v = 0; v < this.lavaVeins.length; v++) {
+      // 2-3 particles per vein
+      const particleCount = 2 + Math.floor(Math.random() * 2);
+      for (let p = 0; p < particleCount; p++) {
+        this.lavaParticles.push({
+          veinIndex: v,
+          progress: Math.random(), // Start at random position
+          speed: 0.002 + Math.random() * 0.003, // Varying speeds
+          trailColors: trailColorSets[Math.floor(Math.random() * trailColorSets.length)],
+        });
+      }
+    }
+  }
+
+  private generateFractalPath(
+    x1: number, y1: number,
+    x2: number, y2: number,
+    depth: number,
+    displacement: number
+  ): { x: number; y: number }[] {
+    // Base case: return endpoints
+    if (depth === 0) {
+      return [{ x: x1, y: y1 }, { x: x2, y: y2 }];
+    }
+
+    // Find midpoint and displace perpendicular to line
+    const midX = (x1 + x2) / 2;
+    const midY = (y1 + y2) / 2;
+
+    // Perpendicular direction
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    const perpX = -dy / len;
+    const perpY = dx / len;
+
+    // Random displacement
+    const offset = (Math.random() - 0.5) * 2 * displacement;
+    const newMidX = midX + perpX * offset;
+    const newMidY = midY + perpY * offset;
+
+    // Recurse on both halves with reduced displacement
+    const left = this.generateFractalPath(x1, y1, newMidX, newMidY, depth - 1, displacement * 0.55);
+    const right = this.generateFractalPath(newMidX, newMidY, x2, y2, depth - 1, displacement * 0.55);
+
+    // Combine (remove duplicate midpoint)
+    return [...left.slice(0, -1), ...right];
   }
 
   private setupInputListeners(): void {
@@ -275,6 +393,7 @@ export class Simulation {
         this.updatePlanetHoverState();
         if (this.planetHoverState === 'edge') {
           this.isResizingPlanet = true;
+          this.lavaVeinsHidden = true; // Hide veins during resize
         } else if (this.planetHoverState === 'interior') {
           this.isDraggingPlanet = true;
           this.planetDragOffsetX = this.inputX - this.planetCenterX;
@@ -284,12 +403,22 @@ export class Simulation {
     });
 
     this.canvas.addEventListener('mouseup', () => {
+      // Regenerate lava veins after resize ends
+      if (this.isResizingPlanet) {
+        this.initLavaVeins();
+        this.lavaVeinsHidden = false;
+      }
       this.isInputActive = false;
       this.isDraggingPlanet = false;
       this.isResizingPlanet = false;
     });
 
     this.canvas.addEventListener('mouseleave', () => {
+      // Regenerate lava veins if we were resizing
+      if (this.isResizingPlanet) {
+        this.initLavaVeins();
+        this.lavaVeinsHidden = false;
+      }
       this.hasInput = false;
       this.isInputActive = false;
       this.isDraggingPlanet = false;
@@ -312,6 +441,7 @@ export class Simulation {
           this.updatePlanetHoverState();
           if (this.planetHoverState === 'edge') {
             this.isResizingPlanet = true;
+            this.lavaVeinsHidden = true; // Hide veins during resize
           } else if (this.planetHoverState === 'interior') {
             this.isDraggingPlanet = true;
             this.planetDragOffsetX = this.inputX - this.planetCenterX;
@@ -344,6 +474,11 @@ export class Simulation {
     }, { passive: false });
 
     this.canvas.addEventListener('touchend', () => {
+      // Regenerate lava veins after resize ends
+      if (this.isResizingPlanet) {
+        this.initLavaVeins();
+        this.lavaVeinsHidden = false;
+      }
       this.isInputActive = false;
       this.hasInput = false;
       this.isDraggingPlanet = false;
@@ -357,7 +492,9 @@ export class Simulation {
     const dy = this.inputY - this.planetCenterY;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
-    const edgeThreshold = 15; // Pixels from edge to trigger resize
+    // Larger touch target on mobile for easier resizing
+    const isMobile = window.innerWidth <= 600;
+    const edgeThreshold = isMobile ? 30 : 15;
 
     if (Math.abs(dist - this.planetRadius) < edgeThreshold) {
       this.planetHoverState = 'edge';
@@ -576,13 +713,13 @@ export class Simulation {
 
         if (this.isInputActive) {
           // === STRONG ATTRACTION (Click/Touch): "Grab" particles ===
-          const attractRadius = 200;
+          const attractRadius = 280;
           const attractRadiusSq = attractRadius * attractRadius;
 
           if (distSq < attractRadiusSq) {
             const dist = Math.sqrt(distSq);
             if (dist > 1) {
-              const strength = 0.3 * (1 - dist / attractRadius); // Stronger when closer
+              const strength = 0.6 * (1 - dist / attractRadius); // Strong magnetic pull
               vx -= (dx / dist) * strength;
               vy -= (dy / dist) * strength;
             }
@@ -785,13 +922,13 @@ export class Simulation {
 
         if (this.isInputActive) {
           // === STRONG ATTRACTION (Click/Touch): "Grab" particles ===
-          const attractRadius = 200;
+          const attractRadius = 280;
           const attractRadiusSq = attractRadius * attractRadius;
 
           if (distSq < attractRadiusSq) {
             const dist = Math.sqrt(distSq);
             if (dist > 1) {
-              const strength = 0.3 * (1 - dist / attractRadius); // Stronger when closer
+              const strength = 0.6 * (1 - dist / attractRadius); // Strong magnetic pull
               vx -= (dx / dist) * strength;
               vy -= (dy / dist) * strength;
             }
@@ -1058,14 +1195,100 @@ export class Simulation {
       const centerY = this.planetCenterY;
       const planetRadius = this.getPlanetRadius();
 
-      // Planet core (solid)
-      ctx.fillStyle = 'rgba(80, 40, 20, 0.8)';
+      // Planet core with molten gradient (hot center, cooler edge)
+      const coreGradient = ctx.createRadialGradient(
+        centerX, centerY, 0,
+        centerX, centerY, planetRadius
+      );
+      coreGradient.addColorStop(0, 'rgba(255, 140, 50, 0.9)');   // Bright orange center
+      coreGradient.addColorStop(0.3, 'rgba(200, 80, 30, 0.85)'); // Mid orange
+      coreGradient.addColorStop(0.7, 'rgba(120, 50, 20, 0.8)');  // Dark brown-orange
+      coreGradient.addColorStop(1, 'rgba(60, 30, 15, 0.75)');    // Dark edge
+      ctx.fillStyle = coreGradient;
       ctx.beginPath();
       ctx.arc(centerX, centerY, planetRadius, 0, Math.PI * 2);
       ctx.fill();
 
+      // === LAVA VEINS: Fractal lightning-like paths with traveling particles ===
+      const time = performance.now() * 0.001;
+
+      if (!this.lavaVeinsHidden && this.lavaVeins.length > 0) {
+        // Clip to planet circle to keep veins inside
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, planetRadius - 2, 0, Math.PI * 2);
+        ctx.clip();
+
+        // Translate to planet center (veins are stored relative to 0,0)
+        ctx.translate(centerX, centerY);
+
+        // Draw the static vein paths (dim background glow)
+        ctx.strokeStyle = 'rgba(255, 100, 30, 0.3)';
+        ctx.lineWidth = 1.5;
+        ctx.shadowBlur = 4;
+        ctx.shadowColor = 'rgba(255, 80, 20, 0.5)';
+
+        for (const vein of this.lavaVeins) {
+          if (vein.length < 2) continue;
+          ctx.beginPath();
+          ctx.moveTo(vein[0].x, vein[0].y);
+          for (let i = 1; i < vein.length; i++) {
+            ctx.lineTo(vein[i].x, vein[i].y);
+          }
+          ctx.stroke();
+        }
+
+        ctx.shadowBlur = 0;
+
+        // Animate and draw particles traveling along veins
+        for (const particle of this.lavaParticles) {
+          const vein = this.lavaVeins[particle.veinIndex];
+          if (!vein || vein.length < 2) continue;
+
+          // Update particle position (loop around)
+          particle.progress += particle.speed;
+          if (particle.progress >= 1) {
+            particle.progress -= 1;
+          }
+
+          // Draw particle trail (5 trailing dots with color gradient)
+          const totalSegments = vein.length - 1;
+          const trailLength = 5;
+          for (let t = 0; t < trailLength; t++) {
+            // Calculate trail position (going backwards along path)
+            let trailProgress = particle.progress - t * 0.015;
+            if (trailProgress < 0) trailProgress += 1;
+
+            const trailExact = trailProgress * totalSegments;
+            const trailSeg = Math.floor(trailExact);
+            const trailSegProgress = trailExact - trailSeg;
+
+            const tp1 = vein[Math.min(trailSeg, vein.length - 1)];
+            const tp2 = vein[Math.min(trailSeg + 1, vein.length - 1)];
+            const tx = tp1.x + (tp2.x - tp1.x) * trailSegProgress;
+            const ty = tp1.y + (tp2.y - tp1.y) * trailSegProgress;
+
+            // Draw trail dot with decreasing size and brightness
+            const trailColor = particle.trailColors[Math.min(t, particle.trailColors.length - 1)];
+            const trailSize = 2.5 - t * 0.4;
+            const trailAlpha = 1 - t * 0.18;
+
+            ctx.globalAlpha = trailAlpha;
+            ctx.fillStyle = trailColor;
+            ctx.shadowBlur = 6 - t;
+            ctx.shadowColor = trailColor;
+            ctx.beginPath();
+            ctx.arc(tx, ty, Math.max(0.5, trailSize), 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        ctx.restore();
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+      }
+
       // Decorative ornaments (glowing spots around the planet)
-      const time = performance.now() * 0.001; // For pulsing animation
       for (const ornament of this.planetOrnaments) {
         const x = centerX + Math.cos(ornament.angle) * planetRadius;
         const y = centerY + Math.sin(ornament.angle) * planetRadius;
@@ -1074,13 +1297,17 @@ export class Simulation {
         const pulse = Math.sin(time * 2 + ornament.phase) * 0.2 + 0.8;
         const intensity = ornament.glowIntensity * pulse;
 
-        // Draw ornament with glow
-        ctx.shadowBlur = 8 * intensity;
+        // Ornament size scales linearly with planet radius
+        // 30px planet → 3px ornament, 300px planet → 11px ornament
+        const ornamentRadius = 3 + (planetRadius - 30) * 0.03;
+        const glowBlur = ornamentRadius * 2.5;
+
+        ctx.shadowBlur = glowBlur * intensity;
         ctx.shadowColor = ornament.color;
         ctx.fillStyle = ornament.color;
-        ctx.globalAlpha = intensity * 0.6;
+        ctx.globalAlpha = intensity * 0.7;
         ctx.beginPath();
-        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.arc(x, y, ornamentRadius, 0, Math.PI * 2);
         ctx.fill();
       }
 
